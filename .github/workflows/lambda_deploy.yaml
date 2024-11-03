@@ -1,0 +1,46 @@
+name: Lambda Deploy
+
+on:
+  push:
+    branches:
+      - "develop" # developブランチにpushやmergeされた時をトリガーとしています
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      outcome: ${{ job.status }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions
+
+      - name: Package Lambda Function
+        run: zip package.zip lambda_function.py
+
+      - name: Update Lambda Function Code
+        run: aws lambda update-function-code --function-name github-actions-test --zip-file fileb://package.zip --publish # Lambda関数のアップデートをしています
+
+      - name: Check Lambda Status
+        run: aws lambda wait function-updated-v2 --function-name github-actions-test # Lambda関数が呼び出せる状態か確認し、ジョブ完了としています
+
+  slack_notification:
+    if: ${{ always() }}
+    needs: deploy
+    uses: ./.github/workflows/slack_notification.yaml
+    with:
+      lambda-function-name: github-actions-test
+      commit-id: ${{ github.sha }}
+      status: ${{ needs.deploy.outputs.outcome }}
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
