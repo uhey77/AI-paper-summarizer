@@ -32,7 +32,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*デプロイ結果: ${{ inputs.status }}*\nLambda関数名: `${{ inputs.lambda-function-name }}`\nコミットID: `${{ inputs.commit-id }}`"
+                    "text": "GitHub Action が実行されました！\n*デプロイ結果: ${{ inputs.status }}*\nLambda関数名: `${{ inputs.lambda-function-name }}`\nコミットID: `${{ inputs.commit-id }}`"
                   }
                 }
               ]
