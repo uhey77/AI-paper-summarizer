@@ -39,13 +39,19 @@ jobs:
         run: |
           cd lambda && zip -r package.zip ./*
           aws lambda update-function-code \
-          --function-name FUNCTIONNAME --zip-file fileb://package.zip --publish
+          --function-name ai-paper-summarizer --zip-file fileb://package.zip --publish
+
+      - name: Check Lambda Status
+        run: |
+          aws lambda wait function-updated-v2 \
+          --function-name ai-paper-summarizer
+
   slack_notification:
     if: ${{ always() }}
     needs: deploy
     uses: ./.github/workflows/slack_notification.yaml
     with:
-      lambda-function-name: github-actions-test
+      lambda-function-name: ai-paper-summarizer
       commit-id: ${{ github.sha }}
       status: ${{ needs.deploy.outputs.outcome }}
     secrets:
