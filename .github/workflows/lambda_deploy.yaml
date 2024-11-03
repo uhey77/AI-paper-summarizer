@@ -1,21 +1,18 @@
-name: Lambda Deploy
+name: AWS Lambda Deploy
 
 on:
   push:
     branches:
-      - "develop" # developブランチにpushやmergeされた時をトリガーとしています
-
+      - develop
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    outputs:
-      outcome: ${{ job.status }}
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -25,15 +22,24 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions
 
-      - name: Package Lambda Function
-        run: zip package.zip lambda_function.py
+      - name: get-caller-identity is allowed to run on role.
+        run: aws sts get-caller-identity
 
-      - name: Update Lambda Function Code
-        run: aws lambda update-function-code --function-name github-actions-test --zip-file fileb://package.zip --publish # Lambda関数のアップデートをしています
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.11'
 
-      - name: Check Lambda Status
-        run: aws lambda wait function-updated-v2 --function-name github-actions-test # Lambda関数が呼び出せる状態か確認し、ジョブ完了としています
+      - name: Install dependencies
+        run: |
+          cd lambda
+          pip install -r requirements.txt -t .
 
+      - name: Deploy to AWS Lambda
+        run: |
+          cd lambda && zip -r package.zip ./*
+          aws lambda update-function-code \
+          --function-name FUNCTIONNAME --zip-file fileb://package.zip --publish
   slack_notification:
     if: ${{ always() }}
     needs: deploy
