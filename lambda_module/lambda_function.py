@@ -8,7 +8,7 @@ from urlextract import URLExtract
 
 from .file_downloader import download_content
 from .save_notion import add_to_notion_database, update_notion_content
-from .text_processor import ChatAssistant, process_text
+from .text_processor import ChatAssistant, Questions, process_text
 
 SLACK_TOKEN = os.environ["SLACK_TOKEN"]
 
@@ -99,17 +99,15 @@ def handle_main_message(slack_event):
         SlackAPI.post_message(slack_event["channel"], "Failed to process the content.")
         return
 
-    # Send title and URL to Slack
     SlackAPI.post_message(
         slack_event["channel"], f"{title}\n{target_url}", slack_event["ts"]
     )
 
-    # Send summary to Slack
+    questions = Questions()
     for question, summary in summary.items():
-        message = f"{question}\n{summary}"
+        message = f"{question}：{questions.to_question_str(question)}\n\n{summary}"
         SlackAPI.post_message(slack_event["channel"], message, slack_event["ts"])
 
-    # Index and tag content, and add to Notion
     try:
         add_content_to_notion(
             title=title,
@@ -139,10 +137,8 @@ def handle_thread_message(slack_event):
     input_context = re.sub(r"<[^>]*>", "", slack_event["text"])
     answer, url = answer_message_from_history(slack_event)
 
-    # Send answer to Slack
     SlackAPI.post_message(slack_event["channel"], answer, slack_event["thread_ts"])
 
-    # Update Notion with Q&A
     try:
         update_notion_content(url, {"question": input_context, "answer": answer})
     except Exception as e:
