@@ -223,7 +223,9 @@ def process_text(text: str, model: str) -> str:
     content_summarizer = ContentSummarizer()
     content_summarizer_settings = base_settings.copy()
     content_summarizer_settings["max_tokens"] = 2048
-    content = content_summarizer.generate_completion(text=text, **content_summarizer_settings)
+    content = content_summarizer.generate_completion(
+        text=text, **content_summarizer_settings
+    )
 
     # classify category ----------------
     category_classifier = CategoryClassifier()

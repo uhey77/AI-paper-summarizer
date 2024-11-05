@@ -56,7 +56,9 @@ def add_to_notion_database(contents, database_id=DATABASE_ID):
                                         "rich_text": [
                                             {
                                                 "text": {
-                                                    "content": str(contents["gpt_summary"]),
+                                                    "content": str(
+                                                        contents["gpt_summary"]
+                                                    ),
                                                 }
                                             }
                                         ],

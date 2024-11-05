@@ -1,11 +1,12 @@
-from .file_downloader import download_content
-from .lambda_function import (
+from lambda_function import (
     SlackAPI,
     extract_url_from_blocks,
     handle_main_message,
     handle_thread_message,
     parse_event_body,
 )
+
+from .file_downloader import download_content
 from .text_processor import ChatAssistant, process_text
 
 __all__ = [
