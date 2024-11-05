@@ -55,6 +55,10 @@ jobs:
             --zip-file fileb://package.zip \
             --publish
 
+      - name: Wait for Lambda Update Completion
+        run: |
+          aws lambda wait function-updated --function-name ai-paper-summarizer
+
       - name: Update Lambda Function with Layer
         run: |
           aws lambda update-function-configuration \
