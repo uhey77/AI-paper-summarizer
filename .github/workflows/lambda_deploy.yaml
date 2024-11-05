@@ -22,7 +22,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions
 
-      - name: get-caller-identity is allowed to run on role.
+      - name: Verify AWS Credentials
         run: aws sts get-caller-identity
 
       - name: Set up Python
@@ -35,16 +35,19 @@ jobs:
           cd lambda_module
           pip install -r requirements.txt -t .
 
-      - name: Deploy to AWS Lambda
+      - name: Package and Deploy to AWS Lambda
         run: |
-          cd lambda_module && zip -r package.zip ./*
+          cd lambda_module
+          zip -r ../package.zip ./*  # `lambda_module`ディレクトリを含むZIPファイルを作成
           aws lambda update-function-code \
-          --function-name ai-paper-summarizer --zip-file fileb://package.zip --publish
+            --function-name ai-paper-summarizer \
+            --zip-file fileb://../package.zip \
+            --publish
 
       - name: Check Lambda Status
         run: |
           aws lambda wait function-updated-v2 \
-          --function-name ai-paper-summarizer
+            --function-name ai-paper-summarizer
 
   slack_notification:
     if: ${{ always() }}
