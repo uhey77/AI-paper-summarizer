@@ -56,7 +56,7 @@ def add_to_notion_database(contents, database_id=DATABASE_ID):
                                         "rich_text": [
                                             {
                                                 "text": {
-                                                    "content": contents["gpt_summary"],
+                                                    "content": str(contents["gpt_summary"]),
                                                 }
                                             }
                                         ],
@@ -68,11 +68,12 @@ def add_to_notion_database(contents, database_id=DATABASE_ID):
                 ],
             }
         )
+
+        print(f"notion database create response: {response}")
     except Exception as e:
-        print(e)
+        raise Exception(f"Error adding to Notion: {e}")
 
     print("notion database create completed")
-    print(response)  # 追加した内容を表示する
 
 
 def fetch_page_from_database(url, database_id=DATABASE_ID):

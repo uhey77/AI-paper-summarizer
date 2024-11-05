@@ -8,4 +8,4 @@ lint: ## run tests with poetry (isort, black, pflake8, mypy)
 
 .PHONY: test
 test: ## run tests with poetry
-	poetry run pytest .
+	PYTHONPATH=. poetry run pytest tests/

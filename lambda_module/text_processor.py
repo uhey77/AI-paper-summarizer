@@ -80,21 +80,26 @@ class TitleExtractor(OpenAIGPT):
 
 
 class ContentSummarizer(OpenAIGPT):
-    def preprocess(self, text):
+    def preprocess(self, text, questions):
         output_format = {
-            "background": ["(string) Background 1", "(string) Background 2"],
-            "purpose": ["(string) Purpose 1", "(string) Purpose 2"],
-            "method": ["(string) Method 1", "(string) Method 2"],
-            "experiment": ["(string) Experiment 1", "(string) Experiment 2"],
-            "result": ["(string) Result 1", "(string) Result 2"],
-            "discussion": ["(string) Discussion 1", "(string) Discussion 2"],
+            question: f"(string) Answer to {question}" for question in questions
         }
         system_prompt = (
-            "あなたは優秀な論文要約AIです。あなたはarxivの論文要約を読み、以下の出力形式に従って内容をまとめて出力します。\n"
+            "あなたは優秀な論文要約AIです。アップロードされた論文を読み込み、以下の問いに答えて下さい。\n"
+            "Q1: 何に関する論文か、専門外の研究者向けに詳しく説明してください。\n"
+            "(以下の質問はその分野の専門家向けに詳しく説明してください。)\n"
+            "Q2: 論文の内容を、背景、新規性、方法などに分けて詳しく説明してください。\n"
+            "Q3: 本研究の手法について特筆すべき部分を、詳しく説明してください。\n"
+            "Q4: 本研究の成果や知見について特筆すべき部分を、詳しく説明してください。\n"
+            "Q5: 本研究の限界について特筆すべき部分を、詳しく説明してください。\n"
+            "Q6: この論文中の記載で曖昧な部分を、詳しく説明してください。\n"
+            "Q7: 引用されている論文の中で特筆すべきものを列挙し、本研究との関連性や違いを詳しく説明してください。\n"
+            "Q8: 本研究で用いたデータセットを網羅的に列挙し、名前やURLなどがあればそれらも含めて詳しく説明してください。\n"
             "# 注意\n"
             "- 出力は日本語で行うこと。その他の言語は一切認めません。ただし、専門用語と思われる単語はそのままでも良い。\n"
             "- それぞれの項目について、箇条書きで出力すること。1つの項目につき、最大3つの文を出力すること。\n"
             "- 敬語は使用しないこと。「〜である」、「〜だ」のような形式にすること。\n"
+            "以下の番号の質問に対して、以下の形式で回答してください。\n"
             "# 出力形式\n"
             f"{self.dict2json(output_format)}"
         )
@@ -108,6 +113,27 @@ class ContentSummarizer(OpenAIGPT):
 
     def postprocess(self, text):
         return self.json2dict(text)
+
+    def _generate_partial_completion(self, text, questions, **kwargs):
+        messages = self.preprocess(text, questions)
+        response = self.client.chat.completions.create(messages=messages, **kwargs)
+        return self.postprocess(response.choices[0].message.content)
+
+    def generate_completion(self, text, **kwargs):
+        # 第一リクエスト (Q1〜Q4)
+        part1_questions = ["Q1", "Q2", "Q3", "Q4"]
+        part1_response = self._generate_partial_completion(
+            text=text, questions=part1_questions, **kwargs
+        )
+
+        # 第二リクエスト (Q5〜Q8)
+        part2_questions = ["Q5", "Q6", "Q7", "Q8"]
+        part2_response = self._generate_partial_completion(
+            text=text, questions=part2_questions, **kwargs
+        )
+
+        # 結果を結合
+        return {**part1_response, **part2_response}
 
 
 class CategoryClassifier(OpenAIGPT):
@@ -195,7 +221,8 @@ def process_text(text: str, model: str) -> str:
 
     # summarize content ----------------
     content_summarizer = ContentSummarizer()
-    content_summarizer_settings = base_settings.copy()["max_tokens"] = 2048
+    content_summarizer_settings = base_settings.copy()
+    content_summarizer_settings["max_tokens"] = 2048
     content = content_summarizer.generate_completion(text=text, **content_summarizer_settings)
 
     # classify category ----------------

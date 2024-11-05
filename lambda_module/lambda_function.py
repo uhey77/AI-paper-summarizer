@@ -4,14 +4,12 @@ import os
 import re
 import urllib.request
 
-from file_downloader import download_content
-from notion_utils import add_to_notion_database, update_notion_content
-from openai import OpenAI
-from text_processor import ChatAssistant, process_text
 from urlextract import URLExtract
 
-# Initialize OpenAI client and logger
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+from .file_downloader import download_content
+from .notion_utils import add_to_notion_database, update_notion_content
+from .text_processor import ChatAssistant, process_text
+
 SLACK_TOKEN = os.environ["SLACK_TOKEN"]
 
 logger = logging.getLogger()
@@ -91,7 +89,9 @@ def handle_main_message(slack_event):
     target_text = download_content(target_url)
 
     try:
-        title, summary, category, briefly_summary = process_text(target_text)
+        title, summary, category, briefly_summary = process_text(
+            target_text, model="gpt-4o-mini"
+        )
     except Exception as e:
         logger.error(f"Error processing text: {e}")
         SlackAPI.post_message(slack_event["channel"], "Failed to process the content.")
@@ -107,7 +107,13 @@ def handle_main_message(slack_event):
 
     # Index and tag content, and add to Notion
     try:
-        add_content_to_notion(title, target_url, summary)
+        add_content_to_notion(
+            title=title,
+            url=target_url,
+            summary=summary,
+            category=category,
+            briefly_summary=briefly_summary,
+        )
     except Exception as e:
         logger.error(f"Failed to add content to Notion: {e}")
 
@@ -134,16 +140,14 @@ def handle_thread_message(slack_event):
 
     # Update Notion with Q&A
     try:
-        update_notion_content(
-            url, {"question": input_context, "answer": answer}
-        )
+        update_notion_content(url, {"question": input_context, "answer": answer})
     except Exception as e:
         logger.error(f"Error updating Notion: {e}")
 
 
 def answer_message_from_history(slack_event):
     chat_assistant = ChatAssistant()
-    settings = {"model": "gpt-4o", "max_tokens": 1024}
+    settings = {"model": "gpt-4o-mini", "max_tokens": 4096}
     messages = []
 
     extractor = URLExtract(cache_dir="/tmp")
@@ -180,5 +184,5 @@ def extract_url_from_blocks(blocks):
         for element in block.get("elements", []):
             for inner_element in element.get("elements", []):
                 if inner_element.get("type") == "link":
-                    return inner_element.get("url", "").replace("/n", "")
+                    return inner_element.get("url", "").replace("\n", "")
     raise ValueError("URL not found in blocks")
