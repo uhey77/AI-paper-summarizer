@@ -40,7 +40,9 @@ class SlackAPI:
     @staticmethod
     def _send_request(url, data):
         json_data = json.dumps(data).encode("utf-8")
-        req = urllib.request.Request(url=url, data=json_data, headers=SlackAPI.HEADERS)
+        req = urllib.request.Request(
+            url=url, data=json_data, headers=SlackAPI.HEADERS, method="POST"
+        )
         try:
             res = urllib.request.urlopen(req, timeout=5)
             return json.loads(res.read().decode("utf-8"))
@@ -103,7 +105,9 @@ def handle_main_message(slack_event):
     )
 
     # Send summary to Slack
-    SlackAPI.post_message(slack_event["channel"], summary, slack_event["ts"])
+    for question, summary in summary.items():
+        message = f"{question}\n{summary}"
+        SlackAPI.post_message(slack_event["channel"], message, slack_event["ts"])
 
     # Index and tag content, and add to Notion
     try:
