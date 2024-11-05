@@ -1,7 +1,6 @@
 import json
 import os
 from abc import abstractmethod
-from typing import Any
 
 from openai import OpenAI
 
@@ -10,13 +9,11 @@ class OpenAIGPT:
     def __init__(self):
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-    def dict2json(self, python_dict: dict[str, Any]) -> str:
+    def dict2json(self, python_dict):
         json_string = json.dumps(python_dict, indent=2, ensure_ascii=False)
         return json_string
 
-    def json2dict(
-        self, json_string: str, error_key: str | None = "error"
-    ) -> dict[str, Any]:
+    def json2dict(self, json_string, error_key="error") -> dict:
         try:
             python_dict = json.loads(
                 self._extract_string(json_string, start_string="{", end_string="}"),
@@ -30,9 +27,7 @@ class OpenAIGPT:
             return python_dict
         return {error_key: python_dict}
 
-    def _extract_string(
-        self, text: str, start_string: str | None = None, end_string: str | None = None
-    ) -> str:
+    def _extract_string(self, text, start_string=None, end_string=None) -> str:
         # 最初の文字
         if start_string is not None and start_string in text:
             idx_head = text.index(start_string)
@@ -213,7 +208,7 @@ class ChatAssistant(OpenAIGPT):
         return text
 
 
-def process_text(text: str, model: str) -> str:
+def process_text(text: str, model: str) -> tuple[str, str, str, str]:
     base_settings = {"model": model, "max_tokens": 100}
     # extract title ----------------
     title_extractor = TitleExtractor()
