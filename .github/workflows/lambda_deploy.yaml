@@ -37,11 +37,10 @@ jobs:
 
       - name: Package and Deploy to AWS Lambda
         run: |
-          cd lambda_module
-          zip -r ../package.zip ./*  # `lambda_module`ディレクトリを含むZIPファイルを作成
+          zip -r package.zip lambda_module
           aws lambda update-function-code \
             --function-name ai-paper-summarizer \
-            --zip-file fileb://../package.zip \
+            --zip-file fileb://package.zip \
             --publish
 
       - name: Check Lambda Status
