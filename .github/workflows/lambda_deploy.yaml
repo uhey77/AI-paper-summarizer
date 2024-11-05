@@ -30,12 +30,24 @@ jobs:
         with:
           python-version: '3.10.11'
 
-      - name: Install dependencies
+      - name: Install dependencies for Lambda Layer
         run: |
-          cd lambda_module
-          pip install -r requirements.txt -t .
+          mkdir -p layer/python
+          pip install -r requirements.txt -t layer/python
+          cd layer && zip -r ../layer.zip . && cd ..
 
-      - name: Package and Deploy to AWS Lambda
+      - name: Deploy Lambda Layer
+        id: layer
+        run: |
+          LAYER_ARN=$(aws lambda publish-layer-version \
+            --layer-name ai-paper-summarizer-layer \
+            --description "Dependencies for ai-paper-summarizer Lambda function" \
+            --zip-file fileb://layer.zip \
+            --compatible-runtimes python3.10 \
+            --query 'LayerVersionArn' --output text)
+          echo "LAYER_ARN=$LAYER_ARN" >> $GITHUB_ENV
+
+      - name: Package and Deploy Lambda Function Code
         run: |
           zip -r package.zip lambda_module
           aws lambda update-function-code \
@@ -43,10 +55,11 @@ jobs:
             --zip-file fileb://package.zip \
             --publish
 
-      - name: Check Lambda Status
+      - name: Update Lambda Function with Layer
         run: |
-          aws lambda wait function-updated-v2 \
-            --function-name ai-paper-summarizer
+          aws lambda update-function-configuration \
+            --function-name ai-paper-summarizer \
+            --layers ${LAYER_ARN}
 
   slack_notification:
     if: ${{ always() }}
