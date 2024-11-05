@@ -5,6 +5,23 @@ from abc import abstractmethod
 from openai import OpenAI
 
 
+class Questions:
+    def __init__(self):
+        self.question_dict = {
+            "Q1": "何に関する論文か、専門外の研究者向けに詳しく説明してください。",
+            "Q2": "論文の内容を、背景、新規性、方法などに分けて詳しく説明してください。",
+            "Q3": "本研究の手法について特筆すべき部分を、詳しく説明してください。",
+            "Q4": "本研究の成果や知見について特筆すべき部分を、詳しく説明してください。",
+            "Q5": "本研究の限界について特筆すべき部分を、詳しく説明してください。",
+            "Q6": "この論文中の記載で曖昧な部分を、詳しく説明してください。",
+            "Q7": "引用されている論文の中で特筆すべきものを列挙し、本研究との関連性や違いを詳しく説明してください。",
+            "Q8": "本研究で用いたデータセットを網羅的に列挙し、名前やURLなどがあればそれらも含めて詳しく説明してください。",
+        }
+
+    def to_question_str(self, question: str) -> str:
+        return self.question_dict.get(question, "No Question")
+
+
 class OpenAIGPT:
     def __init__(self):
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
@@ -134,7 +151,7 @@ class ContentSummarizer(OpenAIGPT):
 class CategoryClassifier(OpenAIGPT):
     def preprocess(self, text):
         output_format = {
-            "category": "(Enum) [Representation Learning, Self Supervised Learning, Generative Model, Audio, Theory, LLM, Agent, Survey, Robotics, NLP, CV, World Model, Foundation Model, Reinforcement Learning]"
+            "category": "(list) [Representation Learning, Self Supervised Learning, Generative Model, Audio, Theory, LLM, Agent, Survey, Robotics, NLP, CV, World Model, Foundation Model, Reinforcement Learning]"
         }
         system_prompt = (
             "あなたは優秀な論文分類AIです。論文の内容からその技術の分野を判定します。\n"
@@ -154,12 +171,28 @@ class CategoryClassifier(OpenAIGPT):
 
     def postprocess(self, text):
         output_dict = self.json2dict(text)
-        return output_dict.get("category", "No Category")
+        list_str = output_dict.get("category", "No Category")
+        return self._parse_string_to_list(list_str)
+
+    def _parse_string_to_list(self, list_str):
+        list_str = list_str.strip("[]")
+        parsed_list = [item.strip() for item in list_str.split(",")]
+        return parsed_list
 
 
 class BrieflySummarizer(OpenAIGPT):
     def preprocess(self, text):
-        output_format = {"summary": "(string) Short Summary of the content"}
+        few_shot_list = [
+            {
+                "summary": "スマートフォンで音声を別の声にリアルタイム変換できる高速モデル「LLVC」"
+            },
+            {
+                "summary": "3.2兆以上のトークンで学習された、130億のパラメータを持つオープン大規模言語モデル「Skywork」"
+            },
+            {
+                "summary": "OpenAIの文字起こしAI「Whisper」を軽量かつ高速にするモデル「Distil-Whisper」"
+            },
+        ]
         system_prompt = (
             "あなたは優秀な論文要約AIです。あなたはarxivの論文要約を読み、以下の出力形式に従って内容を端的にまとめて出力します。\n"
             "# 目的\n"
@@ -176,10 +209,9 @@ class BrieflySummarizer(OpenAIGPT):
             "3. 体言止めになっているか、句読点が入っていないかを確認します。\n"
             "# 出力例\n"
             "以下に3つの出力例を示します。このくらいの分量になるように文字数の規定は必ず守ってください。\n"
-            "- スマートフォンで音声を別の声にリアルタイム変換できる高速モデル「LLVC」\n"
-            "- 3.2兆以上のトークンで学習された、130億のパラメータを持つオープン大規模言語モデル「Skywork」\n"
-            "- OpenAIの文字起こしAI「Whisper」を軽量かつ高速にするモデル「Distil-Whisper」\n"
-            f"{self.dict2json(output_format)}"
+            f"{self.dict2json(few_shot_list[0])}\n"
+            f"{self.dict2json(few_shot_list[1])}\n"
+            f"{self.dict2json(few_shot_list[2])}"
         )
 
         if isinstance(text, dict):
@@ -208,7 +240,7 @@ class ChatAssistant(OpenAIGPT):
         return text
 
 
-def process_text(text: str, model: str) -> tuple[str, str, str, str]:
+def process_text(text: str, model: str):
     base_settings = {"model": model, "max_tokens": 100}
     # extract title ----------------
     title_extractor = TitleExtractor()
