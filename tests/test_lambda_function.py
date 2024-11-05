@@ -1,11 +1,9 @@
 from unittest.mock import patch
 
-from lambda_module.lambda_function import (
-    add_content_to_notion,
-    answer_message_from_history,
-    handle_main_message,
-    parse_event_body,
-)
+from lambda_module.lambda_function import (add_content_to_notion,
+                                           answer_message_from_history,
+                                           handle_main_message,
+                                           parse_event_body)
 
 
 # `parse_event_body` のテスト
@@ -23,7 +21,7 @@ def test_parse_event_body():
 @patch("lambda_module.lambda_function.download_content", return_value="sample text")
 @patch(
     "lambda_module.lambda_function.process_text",
-    return_value=("Title", {"Q1": "Summary"}, "Category", "Brief Summary"),
+    return_value=("Title", {"Q1": "Summary"}, ["Category"], "Brief Summary"),
 )
 @patch("lambda_module.lambda_function.SlackAPI.post_message")
 def test_handle_main_message(
@@ -52,15 +50,15 @@ def test_add_content_to_notion(mock_add_to_notion_database):
     title = "Title"
     url = "http://example.com"
     summary = {"Q1": "Summary"}
-    category = "Category"
+    category = ["Category"]
     briefly_summary = "Brief Summary"
     add_content_to_notion(title, url, summary, category, briefly_summary)
     contents = {
         "title": title,
         "url": url,
-        "index": briefly_summary,
-        "tag": category,
-        "gpt_summary": summary,
+        "briefly_summary": briefly_summary,
+        "category": category,
+        "summary": summary,
     }
     mock_add_to_notion_database.assert_called_once_with(contents)
 

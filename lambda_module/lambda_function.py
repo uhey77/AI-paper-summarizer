@@ -7,7 +7,7 @@ import urllib.request
 from urlextract import URLExtract
 
 from .file_downloader import download_content
-from .notion_utils import add_to_notion_database, update_notion_content
+from .save_notion import add_to_notion_database, update_notion_content
 from .text_processor import ChatAssistant, process_text
 
 SLACK_TOKEN = os.environ["SLACK_TOKEN"]
@@ -126,10 +126,10 @@ def add_content_to_notion(title, url, summary, category, briefly_summary):
 
     contents = {
         "title": title,
+        "category": category,
+        "briefly_summary": briefly_summary,
         "url": url,
-        "index": briefly_summary,
-        "tag": category,
-        "gpt_summary": summary,
+        "summary": summary,
     }
 
     add_to_notion_database(contents)
