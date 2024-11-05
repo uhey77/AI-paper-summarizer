@@ -32,12 +32,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd lambda
+          cd lambda_module
           pip install -r requirements.txt -t .
 
       - name: Deploy to AWS Lambda
         run: |
-          cd lambda && zip -r package.zip ./*
+          cd lambda_module && zip -r package.zip ./*
           aws lambda update-function-code \
           --function-name ai-paper-summarizer --zip-file fileb://package.zip --publish
 
