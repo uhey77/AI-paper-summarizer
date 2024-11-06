@@ -104,8 +104,8 @@ def handle_main_message(slack_event):
     )
 
     questions = Questions()
-    for question, summary in summary.items():
-        message = f"{question}：{questions.to_question_str(question)}\n\n{summary}"
+    for question, answer in summary.items():
+        message = f"{question}：{questions.to_question_str(question)}\n\n{answer}"
         SlackAPI.post_message(slack_event["channel"], message, slack_event["ts"])
 
     try:
