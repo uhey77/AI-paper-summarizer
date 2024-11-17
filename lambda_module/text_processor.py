@@ -94,10 +94,10 @@ class TitleExtractor(OpenAIGPT):
 class ContentSummarizer(OpenAIGPT):
     def preprocess(self, text, questions):
         output_format = {
-            question: f"(string) Answer to {question}" for question in questions
+            question: f"(string) Answer to {question} in markdown format" for question in questions
         }
         system_prompt = (
-            "あなたは優秀な論文要約AIです。アップロードされた論文を読み込み、以下の問いに答えて下さい。\n"
+            "与えられる文章を読み込み、以下の問いに答えて下さい。\n"
             "Q1: 何に関する論文か、専門外の研究者向けに詳しく説明してください。\n"
             "(以下の質問はその分野の専門家向けに詳しく説明してください。)\n"
             "Q2: 論文の内容を、背景、新規性、方法などに分けて詳しく説明してください。\n"
@@ -109,7 +109,7 @@ class ContentSummarizer(OpenAIGPT):
             "Q8: 本研究で用いたデータセットを網羅的に列挙し、名前やURLなどがあればそれらも含めて詳しく説明してください。\n"
             "# 注意\n"
             "- 出力は日本語で行うこと。その他の言語は一切認めません。ただし、専門用語と思われる単語はそのままでも良い。\n"
-            "- それぞれの項目について、箇条書きで出力すること。1つの項目につき、最大3つの文を出力すること。\n"
+            "- 可能な限り詳細に出力すること。\n"
             "- 敬語は使用しないこと。「〜である」、「〜だ」のような形式にすること。\n"
             "以下の番号の質問に対して、以下の形式で回答してください。\n"
             "# 出力形式\n"
@@ -132,20 +132,15 @@ class ContentSummarizer(OpenAIGPT):
         return self.postprocess(response.choices[0].message.content)
 
     def generate_completion(self, text, **kwargs):
-        # 第一リクエスト (Q1〜Q4)
-        part1_questions = ["Q1", "Q2", "Q3", "Q4"]
-        part1_response = self._generate_partial_completion(
-            text=text, questions=part1_questions, **kwargs
-        )
-
-        # 第二リクエスト (Q5〜Q8)
-        part2_questions = ["Q5", "Q6", "Q7", "Q8"]
-        part2_response = self._generate_partial_completion(
-            text=text, questions=part2_questions, **kwargs
-        )
-
-        # 結果を結合
-        return {**part1_response, **part2_response}
+        questions = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"]
+        return_results = {}
+        for question_index in questions:
+            partial_response = self._generate_partial_completion(
+                text, [question_index], **kwargs
+            )
+            print(partial_response)
+            return_results[question_index] = partial_response.get(question_index, "")
+        return return_results
 
 
 class CategoryClassifier(OpenAIGPT):
