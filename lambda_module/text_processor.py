@@ -22,7 +22,7 @@ class Questions:
         return self.question_dict.get(question, "No Question")
 
 
-class OpenAIGPT:
+class AbstractLLM:
     def __init__(self):
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
@@ -69,7 +69,7 @@ class OpenAIGPT:
         pass
 
 
-class TitleExtractor(OpenAIGPT):
+class TitleExtractor(AbstractLLM):
     def preprocess(self, text):
         output_format = {"title": "(string) Title of the content"}
         system_prompt = (
@@ -91,7 +91,7 @@ class TitleExtractor(OpenAIGPT):
         return output_dict.get("title", "No Title")
 
 
-class ContentSummarizer(OpenAIGPT):
+class ContentSummarizer(AbstractLLM):
     def preprocess(self, text, questions):
         output_format = {
             question: f"(string) Answer to {question} in markdown format" for question in questions
@@ -143,7 +143,7 @@ class ContentSummarizer(OpenAIGPT):
         return return_results
 
 
-class CategoryClassifier(OpenAIGPT):
+class CategoryClassifier(AbstractLLM):
     def preprocess(self, text):
         output_format = {
             "category": "(list) [Representation Learning, Self Supervised Learning, Generative Model, Audio, Theory, LLM, Agent, Survey, Robotics, NLP, CV, World Model, Foundation Model, Reinforcement Learning]"
@@ -175,7 +175,7 @@ class CategoryClassifier(OpenAIGPT):
         return parsed_list
 
 
-class BrieflySummarizer(OpenAIGPT):
+class BrieflySummarizer(AbstractLLM):
     def preprocess(self, text):
         few_shot_list = [
             {
@@ -225,7 +225,7 @@ class BrieflySummarizer(OpenAIGPT):
         return output_dict.get("summary", "No Summary")
 
 
-class ChatAssistant(OpenAIGPT):
+class ChatAssistant(AbstractLLM):
     def preprocess(self, text):
         if isinstance(text, list):
             return text
