@@ -1,8 +1,4 @@
-import json
-import os
-from abc import abstractmethod
-
-from openai import OpenAI
+from llm import AbstractLLM
 
 
 class Questions:
@@ -22,54 +18,7 @@ class Questions:
         return self.question_dict.get(question, "No Question")
 
 
-class OpenAIGPT:
-    def __init__(self):
-        self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-
-    def dict2json(self, python_dict):
-        json_string = json.dumps(python_dict, indent=2, ensure_ascii=False)
-        return json_string
-
-    def json2dict(self, json_string, error_key="error") -> dict:
-        try:
-            python_dict = json.loads(
-                self._extract_string(json_string, start_string="{", end_string="}"),
-                strict=False,
-            )
-        except ValueError:
-            if error_key is None:
-                return json_string
-            python_dict = {error_key: json_string}
-        if isinstance(python_dict, dict):
-            return python_dict
-        return {error_key: python_dict}
-
-    def _extract_string(self, text, start_string=None, end_string=None) -> str:
-        # 最初の文字
-        if start_string is not None and start_string in text:
-            idx_head = text.index(start_string)
-            text = text[idx_head:]
-        # 最後の文字
-        if end_string is not None and end_string in text:
-            idx_tail = len(text) - text[::-1].index(end_string[::-1])
-            text = text[:idx_tail]
-        return text
-
-    @abstractmethod
-    def preprocess(self, text: str) -> list[dict]:
-        pass
-
-    def generate_completion(self, text: str, **kwargs) -> str:
-        messages = self.preprocess(text)
-        response = self.client.chat.completions.create(messages=messages, **kwargs)
-        return self.postprocess(response.choices[0].message.content)
-
-    @abstractmethod
-    def postprocess(self, text: str):
-        pass
-
-
-class TitleExtractor(OpenAIGPT):
+class TitleExtractor(AbstractLLM):
     def preprocess(self, text):
         output_format = {"title": "(string) Title of the content"}
         system_prompt = (
@@ -91,10 +40,11 @@ class TitleExtractor(OpenAIGPT):
         return output_dict.get("title", "No Title")
 
 
-class ContentSummarizer(OpenAIGPT):
+class ContentSummarizer(AbstractLLM):
     def preprocess(self, text, questions):
         output_format = {
-            question: f"(string) Answer to {question} in markdown format" for question in questions
+            question: f"(string) Answer to {question} in markdown format"
+            for question in questions
         }
         system_prompt = (
             "与えられる文章を読み込み、以下の問いに答えて下さい。\n"
@@ -143,7 +93,7 @@ class ContentSummarizer(OpenAIGPT):
         return return_results
 
 
-class CategoryClassifier(OpenAIGPT):
+class CategoryClassifier(AbstractLLM):
     def preprocess(self, text):
         output_format = {
             "category": "(list) [Representation Learning, Self Supervised Learning, Generative Model, Audio, Theory, LLM, Agent, Survey, Robotics, NLP, CV, World Model, Foundation Model, Reinforcement Learning]"
@@ -175,7 +125,7 @@ class CategoryClassifier(OpenAIGPT):
         return parsed_list
 
 
-class BrieflySummarizer(OpenAIGPT):
+class BrieflySummarizer(AbstractLLM):
     def preprocess(self, text):
         few_shot_list = [
             {
@@ -225,7 +175,7 @@ class BrieflySummarizer(OpenAIGPT):
         return output_dict.get("summary", "No Summary")
 
 
-class ChatAssistant(OpenAIGPT):
+class ChatAssistant(AbstractLLM):
     def preprocess(self, text):
         if isinstance(text, list):
             return text
