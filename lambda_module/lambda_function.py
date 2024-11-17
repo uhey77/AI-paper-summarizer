@@ -26,7 +26,8 @@ class SlackAPI:
     @staticmethod
     def post_message(channel, message, thread_ts=None):
         url = f"{SlackAPI.BASE_URL}/chat.postMessage"
-        data = {"channel": channel, "text": message}
+        # data = {"channel": channel, "text": message}
+        data = {"channel": channel, "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": message}}]}
         if thread_ts:
             data["thread_ts"] = thread_ts
         SlackAPI._send_request(url, data)
