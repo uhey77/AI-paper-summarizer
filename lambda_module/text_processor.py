@@ -1,4 +1,4 @@
-from llm import AbstractLLM
+from .llm import AbstractLLM
 
 
 class Questions:
