@@ -5,15 +5,16 @@ on:
     branches:
       - main
     paths:
-      - "AI-Paper-Summarizer/**"
+      - "AI-paper-summarizer/**"
       - ".github/workflows/test.yaml"
 
 defaults:
   run:
-    working-directory: AI-Paper-Summarizer
+    working-directory: AI-paper-summarizer
 
 jobs:
-  test-backend:
+  test:
+    name: Lint and Test
     runs-on: ubuntu-latest
 
     steps:
