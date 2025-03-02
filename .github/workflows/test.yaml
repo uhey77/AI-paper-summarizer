@@ -8,10 +8,6 @@ on:
       - "AI-paper-summarizer/**"
       - ".github/workflows/test.yaml"
 
-defaults:
-  run:
-    working-directory: AI-paper-summarizer
-
 jobs:
   test:
     name: Lint and Test
