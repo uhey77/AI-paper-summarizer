@@ -35,21 +35,21 @@
 
 ## 利用方法 (Usage)
 
-> Slack での論文要約
+> **Slack での論文要約**<br>
 テキストを Slack に投稿すると、AI が内容を解析して論文の要約を生成します。
 
 <p align="center">
   <img src="docs/slack_post.png" style="width:50%; height:auto;" alt="Slackでの論文要約の例" />
 </p>
 
-> Slack での QA
+> **Slack での QA**<br>
 Slack 上でチャット形式のやり取りが可能です。論文の詳細や疑問点などを対話的に質問できます。
 
 <p align="center">
   <img src="docs/slack_chat.png" style="width:50%; height:auto;" alt="SlackでのQAの例" />
 </p>
 
-> Notion Database への保存
+> **Notion Database への保存**<br>
 要約結果やメタ情報を Notion Database に自動保存します。後から簡単に検索・閲覧・編集が可能です。
 
 <p align="center">
