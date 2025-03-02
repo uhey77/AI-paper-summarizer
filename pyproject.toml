@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
-python = "3.10.11"
+python = "^3.10"
 openai = "^1.53.0"
 notion-client = "^2.2.1"
 arxiv = "^2.1.3"
