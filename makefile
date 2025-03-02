@@ -1,10 +1,10 @@
 .PHONY: lint
 lint: ## run lint with poetry (ruff, mypy)
-	poetry run ruff format .
-	poetry run ruff check --fix .
-	poetry run mypy . --explicit-package-bases
+	poetry run ruff format src
+	poetry run ruff check --fix src
+	poetry run mypy src --explicit-package-bases
 
 
 .PHONY: test
 test: ## run tests with poetry
-	PYTHONPATH=. poetry run pytest tests/
+	poetry run pytest tests

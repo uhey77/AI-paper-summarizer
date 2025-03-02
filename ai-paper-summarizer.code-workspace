@@ -28,8 +28,8 @@
   "extensions": {
     "recommendations": [
       "esbenp.prettier-vscode",
-      "dbaeumer.vscode-eslint",
-      "ms-python.mypy-type-checker"
+      "ms-python.mypy-type-checker",
+      "charliermarsh.ruff"
     ]
   }
 }
