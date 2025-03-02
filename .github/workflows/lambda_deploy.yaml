@@ -3,7 +3,7 @@ name: AWS Lambda Deploy
 on:
   push:
     branches:
-      - develop
+      - prd
 jobs:
   deploy:
     runs-on: ubuntu-latest
